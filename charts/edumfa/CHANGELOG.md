@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## v0.5.1
+
+- This is a release to test release automation.
+- No functional changes were made.
+
 ## v0.5.0
 
 - This is the first release for wider testing. Versions before this can be found
