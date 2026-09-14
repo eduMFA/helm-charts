@@ -1,0 +1,48 @@
+name: publish
+
+on:
+  push:
+    tags:
+      - "edumfa-*"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: write
+    env:
+       REGISTRY: "ghcr.io"
+       REPOSITORY: "oci://ghcr.io/edumfa/helm-charts"
+       GHCR_REPOSITORY: "edumfa/helm-charts/edumfa"
+    steps:
+      - uses: actions/checkout@v7
+      - name: Set up Helm
+        uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 # v4.3.1
+        with:
+          version: v3.12.0
+      - name: Log into registry ${{ env.REGISTRY }}
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Package and publish chart
+        run: |
+          set -euxo pipefail
+          # set chart version
+          git_tag_prefix="edumfa-"
+          git_tag="${{ github.ref_name }}"
+          git_tag_version=${git_tag#"$git_tag_prefix"}
+          sed -i "s/^version: SET_BY_CI\$/version: ${git_tag_version}/" ./charts/edumfa/Chart.yaml
+
+          helm package ./charts/edumfa/
+          helm push edumfa*.tgz ${{ env.REPOSITORY  }}
+      - name: GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          body: "See https://github.com/eduMFA/helm-charts/blob/main/charts/edumfa/CHANGELOG.md for the changelog."
+          files: |
+            ./charts/edumfa/values.yaml
+            ./edumfa*.tgz
