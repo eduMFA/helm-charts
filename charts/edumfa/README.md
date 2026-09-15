@@ -115,3 +115,37 @@ proceed with the deployment.
    `helm install -n $YOUR_NAMESPACE $RELEASE_NAME -f values.yaml  'oci://ghcr.io/edumfa/helm-charts/edumfa' --version $LATEST_VERSION`
 
 See the list of available versions [here](https://ghcr.io/edumfa/helm-charts/edumfa).
+
+## Configuration
+
+The eduMFA container allows for two ways to set options in the config file.
+
+### Using environment variables (recommended)
+
+This chart is in essence a wrapper around
+[environment variable based configuration](https://edumfa.readthedocs.io/en/latest/installation/docker.html#via-environment-variables)
+for the eduMFA container image. If you want to configure additional settings in
+the config file, you can therefore set the corresponding environment variable
+to the worker/init/cronjob (e.g. `.Values.edumfa.worker.env`) you want to set
+that setting for. If you want it to apply to all eduMFA pods, set
+`.Values.edumfa.env`.  
+For sensitive data, please see the `_FILE` suffix in the above link.
+
+
+### Using a file
+
+Follow the
+[instructions for the container image](https://edumfa.readthedocs.io/en/latest/installation/docker.html#via-configuration-file)
+to use a file.  
+Keep in mind:
+- You will still have to supply the essentialSecret and database password
+  secret.
+- They will still be mounted into `/run/`.
+- The corresponding `_FILE` environment variables will still be set.
+
+This means that either your config file simply ignores those, or you take the
+[config file in the container](https://github.com/eduMFA/eduMFA/blob/main/deploy/docker/edumfa_config.py)
+and extend it.  
+If you need to use a setting in the eduMFA config file which is not yet
+supported in that file, please open a issue or Pull Request to implement that
+setting.
